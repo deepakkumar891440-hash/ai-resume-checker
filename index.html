@@ -3,24 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Resume & ATS Checker ✨</title>
-  <link href="<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Resume & ATS Checker ✨</title>
+  <title>AI ATS Resume Checker</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     :root {
       --primary: #06b6d4;
       --accent: #3b82f6;
       --bg: #030712;
-      --card-bg: rgba(15, 23, 42, 0.88);
+      --card-bg: rgba(15, 23, 42, 0.9);
       --input-bg: #0b1329;
-      --border: rgba(56, 189, 248, 0.18);
+      --border: rgba(56, 189, 248, 0.2);
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --success: #10b981;
@@ -45,6 +37,14 @@
       display: flex;
       justify-content: center;
       min-height: 100vh;
+      position: relative;
+    }
+
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
     }
 
     .container {
@@ -55,11 +55,12 @@
       -webkit-backdrop-filter: blur(24px);
       border-radius: 28px;
       border: 1px solid var(--border);
-      padding: 36px 28px;
+      padding: 36px 26px;
       box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.7), 0 0 45px rgba(6, 182, 212, 0.12);
+      height: fit-content;
     }
 
-    /* Rotating Circular Badge */
+    /* Rotating Circular Badge Header */
     .header-branding {
       display: flex;
       flex-direction: column;
@@ -169,7 +170,7 @@
       border: 2px dashed rgba(56, 189, 248, 0.3);
       background: var(--input-bg);
       border-radius: 14px;
-      padding: 20px;
+      padding: 16px;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s;
@@ -251,16 +252,16 @@
       width: 100px;
       height: 100px;
       border-radius: 50%;
-      background: conic-gradient(var(--primary) calc(var(--score) * 1%), rgba(255,255,255,0.1) 0);
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
+      background: conic-gradient(var(--primary) 0deg, rgba(255,255,255,0.08) 0deg);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
     }
 
     .score-dial-inner {
-      width: 82px;
-      height: 82px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       background: #030712;
       display: flex;
@@ -336,587 +337,7 @@
 </head>
 <body>
 
-  <div class="container">
-    <!-- Rotating Header Logo -->
-    <div class="header-branding">
-      <div class="rotating-badge-box">
-        <svg class="circular-text-svg" viewBox="0 0 160 160">
-          <defs>
-            <path id="badgeCirclePath" d="M 80, 80 m -62, 0 a 62,62 0 1,1 124,0 a 62,62 0 1,1 -124,0" />
-          </defs>
-          <text>
-            <textPath xlink:href="#badgeCirclePath" startOffset="0%">
-              AI ATS RESUME CHECKER & SCORER •
-            </textPath>
-          </text>
-        </svg>
-
-        <div class="core-circle">
-          <svg class="doc-svg-icon" viewBox="0 0 24 24">
-            <path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.1 4.89 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2M18 20H6V4H13V9H18V20M8 12V14H16V12H8M8 16V18H13V16H8Z"/>
-          </svg>
-        </div>
-      </div>
-
-      <h2 class="portal-title">AI Resume & ATS Checker</h2>
-      <p class="portal-subtitle">Optimized for Diploma & Engineering Placement Drives</p>
-    </div>
-
-    <!-- Inputs -->
-    <div class="analyzer-grid">
-      <div class="panel-card">
-        <h3>1. Your Resume Content</h3>
-        <div class="file-dropzone" onclick="document.getElementById('pdfInput').click()">
-          <input type="file" id="pdfInput" accept=".pdf" style="display:none;" onchange="handlePDFUpload(event)" />
-          <p id="uploadStatusText" style="font-size: 13px; color:#38bdf8;">📄 Click to upload Resume (.PDF)</p>
-          <p style="font-size: 11px; color:var(--text-muted); margin-top:4px;">or paste plain text below</p>
-        </div>
-        <textarea id="resumeText" placeholder="Paste your resume text here (Projects, Skills, Education, Experience)..."></textarea>
-      </div>
-
-      <div class="panel-card">
-        <h3>2. Target Job Profile</h3>
-        <label style="font-size: 12px; color: var(--text-muted);">Select Job Role</label>
-        <select id="roleSelect" onchange="loadRoleDefaults()">
-          <option value="software">Frontend / Web Developer</option>
-          <option value="fullstack">Full Stack Developer (MERN / PHP)</option>
-          <option value="python">Python Developer / Data Analyst</option>
-          <option value="java">Java Backend Developer</option>
-          <option value="custom">Custom Job Description</option>
-        </select>
-        <label style="font-size: 12px; color: var(--text-muted);">Job Description / Required Keywords</label>
-        <textarea id="jobDesc" placeholder="Paste target Job Description here for customized keyword matching..."></textarea>
-      </div>
-    </div>
-
-    <button class="btn-analyze" onclick="analyzeResume()">Run AI ATS Inspection 🚀</button>
-
-    <!-- Results -->
-    <div class="result-section hidden" id="resultCard">
-      <div class="score-overview">
-        <div class="score-dial" id="scoreDial" style="--score: 0;">
-          <div class="score-dial-inner">
-            <span class="score-number" id="scoreValue">0</span>
-            <span class="score-label">ATS Score</span>
-          </div>
-        </div>
-        <div class="summary-text">
-          <h4 id="verdictText">Evaluating...</h4>
-          <p id="verdictDesc">Based on Industry Placement Standards & Keyword Match Rate</p>
-        </div>
-      </div>
-
-      <div>
-        <h4 style="font-size: 13px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Matched Keywords</h4>
-        <div id="foundKeywords"></div>
-      </div>
-
-      <div>
-        <h4 style="font-size: 13px; color: var(--danger); margin-bottom: 8px; text-transform: uppercase;">Missing Critical Keywords</h4>
-        <div id="missingKeywords"></div>
-      </div>
-
-      <div class="feedback-box">
-        <h4 style="font-size: 13px; color: #fff; margin-bottom: 8px;">💡 AI Improvement Checklist</h4>
-        <ul id="checklistItems"></ul>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Set PDF.js worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-
-    // Role keyword databases
-    const roleKeywords = {
-      software: ["html", "css", "javascript", "react", "git", "github", "responsive", "api", "json", "frontend", "ui/ux", "vercel", "tailwind"],
-      fullstack: ["javascript", "node.js", "express", "mongodb", "mysql", "sql", "api", "crud", "git", "backend", "full stack", "postman"],
-      python: ["python", "pandas", "numpy", "sql", "git", "django", "flask", "data analysis", "machine learning", "excel", "api"],
-      java: ["java", "oops", "spring boot", "hibernate", "sql", "mysql", "data structures", "git", "jdbc", "multithreading", "maven"]
-    };
-
-    function loadRoleDefaults() {
-      const role = document.getElementById("roleSelect").value;
-      if (role !== "custom") {
-        document.getElementById("jobDesc").value = roleKeywords[role].join(", ");
-      } else {
-        document.getElementById("jobDesc").value = "";
-      }
-    }
-    loadRoleDefaults();
-
-    // PDF Text Extraction
-    async function handlePDFUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      document.getElementById("uploadStatusText").innerText = `⏳ Parsing: ${file.name}...`;
-
-      try {
-        const fileReader = new FileReader();
-        fileReader.onload = async function() {
-          const typedarray = new Uint8Array(this.result);
-          const pdf = await pdfjsLib.getDocument(typedarray).promise;
-          let fullText = "";
-
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageStrings = textContent.items.map(item => item.str);
-            fullText += pageStrings.join(" ") + " ";
-          }
-
-          document.getElementById("resumeText").value = fullText;
-          document.getElementById("uploadStatusText").innerText = `✅ Loaded: ${file.name}`;
-        };
-        fileReader.readAsArrayBuffer(file);
-      } catch (err) {
-        alert("Failed to parse PDF file. Please paste the plain text directly.");
-        document.getElementById("uploadStatusText").innerText = "📄 Click to upload Resume (.PDF)";
-      }
-    }
-
-    // Core ATS Analysis Engine
-    function analyzeResume() {
-      const resume = document.getElementById("resumeText").value.toLowerCase();
-      const jobDesc = document.getElementById("jobDesc").value.toLowerCase();
-
-      if (!resume.trim()) {
-        alert("Please paste resume text or upload a PDF first!");
-        return;
-      }
-
-      // Extract target keywords
-      let targetKeywords = [];
-      if (jobDesc.trim()) {
-        targetKeywords = jobDesc.split(/[\s,;|]+/).map(w => w.trim()).filter(w => w.length > 2);
-        targetKeywords = [...new Set(targetKeywords)];
-      } else {
-        targetKeywords = roleKeywords.software;
-      }
-
-      const matched = [];
-      const missing = [];
-
-      targetKeywords.forEach(kw => {
-        if (resume.includes(kw)) {
-          matched.push(kw);
-        } else {
-          missing.push(kw);
-        }
-      });
-
-      // Score Calculation Factors
-      let score = 0;
-      const matchPercentage = targetKeywords.length > 0 ? (matched.length / targetKeywords.length) * 55 : 30;
-      score += matchPercentage;
-
-      // Formatting & Section Heuristics (45 points)
-      const checklist = [];
-
-      // Check Contact Info
-      const hasEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(resume);
-      const hasPhone = /\b\d{10}\b/.test(resume.replace(/[^0-9]/g, ''));
-      if (hasEmail && hasPhone) {
-        score += 10;
-        checklist.push("✅ Contact information (Email & Phone) detected clearly.");
-      } else {
-        checklist.push("❌ Missing or unparseable Email address or 10-digit Phone Number.");
-      }
-
-      // Check GitHub / Portfolio Link
-      if (resume.includes("github.com") || resume.includes("linkedin.com") || resume.includes("vercel.app")) {
-        score += 10;
-        checklist.push("✅ Technical portfolio / GitHub links detected.");
-      } else {
-        checklist.push("❌ Include active GitHub or Vercel live deployment links for IT placements.");
-      }
-
-      // Check Essential Sections
-      const hasProjects = resume.includes("project") || resume.includes("projects");
-      const hasEducation = resume.includes("diploma") || resume.includes("education") || resume.includes("polytechnic");
-      if (hasProjects && hasEducation) {
-        score += 15;
-        checklist.push("✅ Core sections (Projects and Education) clearly present.");
-      } else {
-        checklist.push("❌ Ensure 'Projects' and 'Education' headers are explicitly stated.");
-      }
-
-      // Check Quantifiable Metrics
-      const hasNumbers = /\d+%|\d+\s*(users|records|queries|reduction|stars)/i.test(resume);
-      if (hasNumbers) {
-        score += 10;
-        checklist.push("✅ Quantifiable impact / metrics (%, numbers) detected in project descriptions.");
-      } else {
-        checklist.push("❌ Add quantifiable results to your projects (e.g., 'loaded in under 1s', 'managed 100+ student records').");
-      }
-
-      const finalScore = Math.min(100, Math.round(score));
-
-      // Display Results
-      document.getElementById("resultCard").classList.remove("hidden");
-      document.getElementById("scoreValue").innerText = finalScore;
-      document.getElementById("scoreDial").style.setProperty('--score', finalScore);
-
-      const verdictTitle = document.getElementById("verdictText");
-      if (finalScore >= 75) {
-        verdictTitle.innerText = "Excellent ATS Match Rate! 🎉";
-        verdictTitle.style.color = "var(--success)";
-        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-      } else if (finalScore >= 50) {
-        verdictTitle.innerText = "Moderate Match - Needs Optimization ⚠️";
-        verdictTitle.style.color = "var(--warning)";
-      } else {
-        verdictTitle.innerText = "Low Score - Critical Keywords Missing ❌";
-        verdictTitle.style.color = "var(--danger)";
-      }
-
-      // Fill Badges
-      const foundBox = document.getElementById("foundKeywords");
-      foundBox.innerHTML = matched.length > 0 
-        ? matched.map(k => `<span class="badge-pill badge-found">${k}</span>`).join("")
-        : "<span style='font-size:12px; color:#64748b;'>No target keywords found.</span>";
-
-      const missingBox = document.getElementById("missingKeywords");
-      missingBox.innerHTML = missing.length > 0 
-        ? missing.map(k => `<span class="badge-pill badge-missing">${k}</span>`).join("")
-        : "<span style='font-size:12px; color:#10b981;'>No missing keywords! Perfect score.</span>";
-
-      // Fill Checklist
-      const listContainer = document.getElementById("checklistItems");
-      listContainer.innerHTML = checklist.map(item => `<li>${item}</li>`).join("");
-
-      // Smooth scroll to results
-      document.getElementById("resultCard").scrollIntoView({ behavior: 'smooth' });
-    }
-  </script>
-</body>
-</html>
-" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <style>
-    :root {
-      --primary: #06b6d4;
-      --accent: #3b82f6;
-      --bg: #030712;
-      --card-bg: rgba(15, 23, 42, 0.88);
-      --input-bg: #0b1329;
-      --border: rgba(56, 189, 248, 0.18);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #f43f5e;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-
-    body {
-      background-color: var(--bg);
-      background-image: 
-        radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.18) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.18) 0px, transparent 50%);
-      color: var(--text-main);
-      padding: 24px 14px;
-      display: flex;
-      justify-content: center;
-      min-height: 100vh;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 950px;
-      background: var(--card-bg);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-radius: 28px;
-      border: 1px solid var(--border);
-      padding: 36px 28px;
-      box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.7), 0 0 45px rgba(6, 182, 212, 0.12);
-    }
-
-    /* Rotating Circular Badge */
-    .header-branding {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 26px;
-      text-align: center;
-    }
-
-    .rotating-badge-box {
-      position: relative;
-      width: 130px;
-      height: 130px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 14px;
-    }
-
-    .circular-text-svg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      animation: rotateText 16s linear infinite;
-    }
-
-    .circular-text-svg text {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 8.8px;
-      font-weight: 700;
-      letter-spacing: 2.8px;
-      fill: #38bdf8;
-      text-transform: uppercase;
-    }
-
-    @keyframes rotateText {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    .core-circle {
-      width: 72px;
-      height: 72px;
-      background: #000000;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 25px rgba(6, 182, 212, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.2);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      z-index: 2;
-    }
-
-    .doc-svg-icon {
-      width: 36px;
-      height: 36px;
-      fill: #ffffff;
-    }
-
-    h2.portal-title {
-      font-size: 26px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    p.portal-subtitle {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    /* Input Grid */
-    .analyzer-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      margin-bottom: 22px;
-    }
-
-    @media (max-width: 768px) {
-      .analyzer-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .panel-card {
-      background: rgba(11, 19, 41, 0.7);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .panel-card h3 {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--primary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .file-dropzone {
-      border: 2px dashed rgba(56, 189, 248, 0.3);
-      background: var(--input-bg);
-      border-radius: 14px;
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .file-dropzone:hover {
-      border-color: var(--primary);
-      background: rgba(6, 182, 212, 0.05);
-    }
-
-    textarea {
-      width: 100%;
-      height: 140px;
-      background: var(--input-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      color: #ffffff;
-      font-size: 13px;
-      outline: none;
-      resize: vertical;
-    }
-
-    textarea:focus, select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
-    }
-
-    select {
-      width: 100%;
-      padding: 10px 12px;
-      background: var(--input-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: #fff;
-      font-size: 13px;
-      outline: none;
-    }
-
-    .btn-analyze {
-      width: 100%;
-      background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-      color: #ffffff;
-      padding: 14px;
-      border: none;
-      border-radius: 14px;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
-      box-shadow: 0 8px 20px -4px rgba(6, 182, 212, 0.45);
-      transition: all 0.2s;
-      margin-bottom: 24px;
-    }
-
-    .btn-analyze:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 25px -4px rgba(6, 182, 212, 0.6);
-    }
-
-    /* Result Dashboard */
-    .result-section {
-      background: rgba(8, 14, 30, 0.85);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .score-overview {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      flex-wrap: wrap;
-    }
-
-    .score-dial {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      background: conic-gradient(var(--primary) calc(var(--score) * 1%), rgba(255,255,255,0.1) 0);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-
-    .score-dial-inner {
-      width: 82px;
-      height: 82px;
-      border-radius: 50%;
-      background: #030712;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .score-number {
-      font-size: 24px;
-      font-weight: 800;
-      color: #fff;
-    }
-
-    .score-label {
-      font-size: 9px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-    }
-
-    .summary-text h4 {
-      font-size: 18px;
-      margin-bottom: 4px;
-    }
-
-    .summary-text p {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    .badge-pill {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      margin-right: 6px;
-      margin-bottom: 6px;
-    }
-
-    .badge-found {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--success);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .badge-missing {
-      background: rgba(244, 63, 94, 0.15);
-      color: var(--danger);
-      border: 1px solid rgba(244, 63, 94, 0.3);
-    }
-
-    .feedback-box {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 14px;
-    }
-
-    .feedback-box ul {
-      padding-left: 20px;
-      font-size: 13px;
-      color: #cbd5e1;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-  </style>
-</head>
-<body>
+  <canvas id="confettiCanvas"></canvas>
 
   <div class="container">
     <!-- Rotating Header Logo -->
@@ -944,52 +365,52 @@
       <p class="portal-subtitle">Optimized for Diploma & Engineering Placement Drives</p>
     </div>
 
-    <!-- Inputs -->
+    <!-- Analyzer Input Grid -->
     <div class="analyzer-grid">
       <div class="panel-card">
         <h3>1. Your Resume Content</h3>
-        <div class="file-dropzone" onclick="document.getElementById('pdfInput').click()">
-          <input type="file" id="pdfInput" accept=".pdf" style="display:none;" onchange="handlePDFUpload(event)" />
-          <p id="uploadStatusText" style="font-size: 13px; color:#38bdf8;">📄 Click to upload Resume (.PDF)</p>
-          <p style="font-size: 11px; color:var(--text-muted); margin-top:4px;">or paste plain text below</p>
+        <div class="file-dropzone" onclick="document.getElementById('fileUpload').click()">
+          <input type="file" id="fileUpload" accept=".txt,.pdf,.doc,.docx" style="display:none;" onchange="handleFileUpload(event)" />
+          <p id="uploadStatus" style="font-size: 13px; color:#38bdf8;">📄 Click to upload (.txt, .pdf) or paste below</p>
+          <p style="font-size: 11px; color:var(--text-muted); margin-top:4px;">Direct text pasting is fastest & 100% accurate</p>
         </div>
-        <textarea id="resumeText" placeholder="Paste your resume text here (Projects, Skills, Education, Experience)..."></textarea>
+        <textarea id="resumeText" placeholder="Paste your resume text here (Skills, Projects, Education, GitHub link, Email, Phone)..."></textarea>
       </div>
 
       <div class="panel-card">
         <h3>2. Target Job Profile</h3>
-        <label style="font-size: 12px; color: var(--text-muted);">Select Job Role</label>
-        <select id="roleSelect" onchange="loadRoleDefaults()">
-          <option value="software">Frontend / Web Developer</option>
+        <label style="font-size: 12px; color: var(--text-muted);">Select Target Role</label>
+        <select id="roleSelect" onchange="updateRoleDefaults()">
+          <option value="frontend">Frontend / Web Developer</option>
           <option value="fullstack">Full Stack Developer (MERN / PHP)</option>
           <option value="python">Python Developer / Data Analyst</option>
           <option value="java">Java Backend Developer</option>
           <option value="custom">Custom Job Description</option>
         </select>
-        <label style="font-size: 12px; color: var(--text-muted);">Job Description / Required Keywords</label>
-        <textarea id="jobDesc" placeholder="Paste target Job Description here for customized keyword matching..."></textarea>
+        <label style="font-size: 12px; color: var(--text-muted);">Required Keywords / Job Requirements</label>
+        <textarea id="jobKeywords" placeholder="Job keywords will auto-fill or you can paste specific requirements..."></textarea>
       </div>
     </div>
 
-    <button class="btn-analyze" onclick="analyzeResume()">Run AI ATS Inspection 🚀</button>
+    <button class="btn-analyze" onclick="runAnalysis()">Run AI ATS Inspection 🚀</button>
 
-    <!-- Results -->
+    <!-- Inspection Results -->
     <div class="result-section hidden" id="resultCard">
       <div class="score-overview">
-        <div class="score-dial" id="scoreDial" style="--score: 0;">
+        <div class="score-dial" id="scoreDial">
           <div class="score-dial-inner">
             <span class="score-number" id="scoreValue">0</span>
             <span class="score-label">ATS Score</span>
           </div>
         </div>
         <div class="summary-text">
-          <h4 id="verdictText">Evaluating...</h4>
+          <h4 id="verdictText">Calculating...</h4>
           <p id="verdictDesc">Based on Industry Placement Standards & Keyword Match Rate</p>
         </div>
       </div>
 
       <div>
-        <h4 style="font-size: 13px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Matched Keywords</h4>
+        <h4 style="font-size: 13px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Matched Technical Keywords</h4>
         <div id="foundKeywords"></div>
       </div>
 
@@ -999,88 +420,83 @@
       </div>
 
       <div class="feedback-box">
-        <h4 style="font-size: 13px; color: #fff; margin-bottom: 8px;">💡 AI Improvement Checklist</h4>
+        <h4 style="font-size: 13px; color: #fff; margin-bottom: 8px;">💡 AI Placement Improvement Checklist</h4>
         <ul id="checklistItems"></ul>
       </div>
     </div>
   </div>
 
   <script>
-    // Set PDF.js worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-
-    // Role keyword databases
-    const roleKeywords = {
-      software: ["html", "css", "javascript", "react", "git", "github", "responsive", "api", "json", "frontend", "ui/ux", "vercel", "tailwind"],
-      fullstack: ["javascript", "node.js", "express", "mongodb", "mysql", "sql", "api", "crud", "git", "backend", "full stack", "postman"],
-      python: ["python", "pandas", "numpy", "sql", "git", "django", "flask", "data analysis", "machine learning", "excel", "api"],
-      java: ["java", "oops", "spring boot", "hibernate", "sql", "mysql", "data structures", "git", "jdbc", "multithreading", "maven"]
+    // Role Keyword Repository
+    const rolePresets = {
+      frontend: ["html", "css", "javascript", "react", "git", "github", "responsive", "api", "json", "ui", "vercel", "tailwind"],
+      fullstack: ["javascript", "node.js", "express", "mongodb", "mysql", "sql", "api", "crud", "git", "github", "rest api", "backend"],
+      python: ["python", "sql", "git", "pandas", "numpy", "api", "database", "django", "flask", "data analysis", "github"],
+      java: ["java", "oops", "sql", "mysql", "data structures", "git", "github", "spring boot", "jdbc", "multithreading"]
     };
 
-    function loadRoleDefaults() {
-      const role = document.getElementById("roleSelect").value;
-      if (role !== "custom") {
-        document.getElementById("jobDesc").value = roleKeywords[role].join(", ");
+    function updateRoleDefaults() {
+      const selected = document.getElementById("roleSelect").value;
+      if (selected !== "custom") {
+        document.getElementById("jobKeywords").value = rolePresets[selected].join(", ");
       } else {
-        document.getElementById("jobDesc").value = "";
+        document.getElementById("jobKeywords").value = "";
       }
     }
-    loadRoleDefaults();
+    updateRoleDefaults();
 
-    // PDF Text Extraction
-    async function handlePDFUpload(event) {
+    // Text / File Extraction (Robust & Dependency-Free)
+    function handleFileUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      document.getElementById("uploadStatusText").innerText = `⏳ Parsing: ${file.name}...`;
+      const status = document.getElementById("uploadStatus");
+      status.innerText = `⏳ Reading: ${file.name}...`;
 
-      try {
-        const fileReader = new FileReader();
-        fileReader.onload = async function() {
-          const typedarray = new Uint8Array(this.result);
-          const pdf = await pdfjsLib.getDocument(typedarray).promise;
-          let fullText = "";
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        let text = e.target.result;
+        
+        // Basic binary cleaner if a PDF or binary file is uploaded
+        if (file.name.endsWith('.pdf')) {
+          text = text.replace(/[^a-zA-Z0-9@.+/\s:-]/g, " ").replace(/\s+/g, " ");
+        }
 
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageStrings = textContent.items.map(item => item.str);
-            fullText += pageStrings.join(" ") + " ";
-          }
+        document.getElementById("resumeText").value = text.trim();
+        status.innerText = `✅ Loaded: ${file.name}`;
+      };
 
-          document.getElementById("resumeText").value = fullText;
-          document.getElementById("uploadStatusText").innerText = `✅ Loaded: ${file.name}`;
-        };
-        fileReader.readAsArrayBuffer(file);
-      } catch (err) {
-        alert("Failed to parse PDF file. Please paste the plain text directly.");
-        document.getElementById("uploadStatusText").innerText = "📄 Click to upload Resume (.PDF)";
-      }
+      reader.onerror = function() {
+        alert("Failed to read file. Please copy and paste the text directly.");
+        status.innerText = "📄 Click to upload or paste text";
+      };
+
+      reader.readAsText(file);
     }
 
-    // Core ATS Analysis Engine
-    function analyzeResume() {
-      const resume = document.getElementById("resumeText").value.toLowerCase();
-      const jobDesc = document.getElementById("jobDesc").value.toLowerCase();
+    // Core ATS Evaluation Engine
+    function runAnalysis() {
+      const resume = document.getElementById("resumeText").value.toLowerCase().trim();
+      const jobInput = document.getElementById("jobKeywords").value.toLowerCase().trim();
 
-      if (!resume.trim()) {
-        alert("Please paste resume text or upload a PDF first!");
+      if (!resume) {
+        alert("Please paste your resume text or upload a file first!");
         return;
       }
 
       // Extract target keywords
-      let targetKeywords = [];
-      if (jobDesc.trim()) {
-        targetKeywords = jobDesc.split(/[\s,;|]+/).map(w => w.trim()).filter(w => w.length > 2);
-        targetKeywords = [...new Set(targetKeywords)];
+      let keywords = [];
+      if (jobInput) {
+        keywords = jobInput.split(/[\s,;|]+/).map(k => k.trim()).filter(k => k.length > 1);
+        keywords = [...new Set(keywords)];
       } else {
-        targetKeywords = roleKeywords.software;
+        keywords = rolePresets.frontend;
       }
 
       const matched = [];
       const missing = [];
 
-      targetKeywords.forEach(kw => {
+      keywords.forEach(kw => {
         if (resume.includes(kw)) {
           matched.push(kw);
         } else {
@@ -1088,88 +504,136 @@
         }
       });
 
-      // Score Calculation Factors
+      // Score Calculation (Base 55% from Keyword Matching)
       let score = 0;
-      const matchPercentage = targetKeywords.length > 0 ? (matched.length / targetKeywords.length) * 55 : 30;
-      score += matchPercentage;
+      const keywordWeight = keywords.length > 0 ? (matched.length / keywords.length) * 55 : 30;
+      score += keywordWeight;
 
-      // Formatting & Section Heuristics (45 points)
+      // 45% Structural & Quality Checks
       const checklist = [];
 
-      // Check Contact Info
+      // 1. Email check
       const hasEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(resume);
-      const hasPhone = /\b\d{10}\b/.test(resume.replace(/[^0-9]/g, ''));
-      if (hasEmail && hasPhone) {
+      if (hasEmail) {
         score += 10;
-        checklist.push("✅ Contact information (Email & Phone) detected clearly.");
+        checklist.push("✅ Professional Email address detected.");
       } else {
-        checklist.push("❌ Missing or unparseable Email address or 10-digit Phone Number.");
+        checklist.push("❌ Missing or unparseable Email address.");
       }
 
-      // Check GitHub / Portfolio Link
-      if (resume.includes("github.com") || resume.includes("linkedin.com") || resume.includes("vercel.app")) {
+      // 2. Phone check (10-digit number)
+      const hasPhone = /\b\d{10}\b/.test(resume.replace(/[^0-9]/g, " "));
+      if (hasPhone) {
         score += 10;
-        checklist.push("✅ Technical portfolio / GitHub links detected.");
+        checklist.push("✅ Contact phone number verified.");
       } else {
-        checklist.push("❌ Include active GitHub or Vercel live deployment links for IT placements.");
+        checklist.push("❌ 10-digit contact phone number not clearly detected.");
       }
 
-      // Check Essential Sections
-      const hasProjects = resume.includes("project") || resume.includes("projects");
-      const hasEducation = resume.includes("diploma") || resume.includes("education") || resume.includes("polytechnic");
-      if (hasProjects && hasEducation) {
-        score += 15;
-        checklist.push("✅ Core sections (Projects and Education) clearly present.");
+      // 3. Technical Portfolio / Git check
+      const hasLinks = resume.includes("github.com") || resume.includes("vercel.app") || resume.includes("linkedin.com");
+      if (hasLinks) {
+        score += 10;
+        checklist.push("✅ Live portfolio or GitHub profile link found.");
       } else {
-        checklist.push("❌ Ensure 'Projects' and 'Education' headers are explicitly stated.");
+        checklist.push("❌ Add your live GitHub or Vercel deployed links for IT placements.");
       }
 
-      // Check Quantifiable Metrics
-      const hasNumbers = /\d+%|\d+\s*(users|records|queries|reduction|stars)/i.test(resume);
-      if (hasNumbers) {
+      // 4. Projects & Education section
+      const hasCore = (resume.includes("project") || resume.includes("projects")) && 
+                      (resume.includes("polytechnic") || resume.includes("diploma") || resume.includes("education"));
+      if (hasCore) {
         score += 10;
-        checklist.push("✅ Quantifiable impact / metrics (%, numbers) detected in project descriptions.");
+        checklist.push("✅ Essential sections (Projects & Education) detected.");
       } else {
-        checklist.push("❌ Add quantifiable results to your projects (e.g., 'loaded in under 1s', 'managed 100+ student records').");
+        checklist.push("❌ Explicit 'Projects' and 'Education' headings must be present.");
+      }
+
+      // 5. Quantifiable Metrics (numbers or %)
+      const hasMetrics = /\b\d+%\b|\b\d+\s*(users|records|queries|reduction|stars|ms)\b/i.test(resume);
+      if (hasMetrics) {
+        score += 5;
+        checklist.push("✅ Measurable performance metrics (numbers or %) found in descriptions.");
+      } else {
+        checklist.push("❌ Add numbers to project descriptions (e.g., 'Handled 500+ records', 'Reduced load time by 30%').");
       }
 
       const finalScore = Math.min(100, Math.round(score));
 
-      // Display Results
-      document.getElementById("resultCard").classList.remove("hidden");
-      document.getElementById("scoreValue").innerText = finalScore;
-      document.getElementById("scoreDial").style.setProperty('--score', finalScore);
+      // Display UI Results
+      const resultCard = document.getElementById("resultCard");
+      resultCard.classList.remove("hidden");
 
-      const verdictTitle = document.getElementById("verdictText");
+      document.getElementById("scoreValue").innerText = finalScore;
+      document.getElementById("scoreDial").style.background = 
+        `conic-gradient(var(--primary) ${finalScore * 3.6}deg, rgba(255,255,255,0.08) 0deg)`;
+
+      const verdict = document.getElementById("verdictText");
       if (finalScore >= 75) {
-        verdictTitle.innerText = "Excellent ATS Match Rate! 🎉";
-        verdictTitle.style.color = "var(--success)";
-        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        verdict.innerText = "Excellent ATS Match Rate! 🎉";
+        verdict.style.color = "var(--success)";
+        triggerConfetti();
       } else if (finalScore >= 50) {
-        verdictTitle.innerText = "Moderate Match - Needs Optimization ⚠️";
-        verdictTitle.style.color = "var(--warning)";
+        verdict.innerText = "Average Match - Needs Optimization ⚠️";
+        verdict.style.color = "var(--warning)";
       } else {
-        verdictTitle.innerText = "Low Score - Critical Keywords Missing ❌";
-        verdictTitle.style.color = "var(--danger)";
+        verdict.innerText = "Low Match - Missing Core Keywords ❌";
+        verdict.style.color = "var(--danger)";
       }
 
-      // Fill Badges
+      // Populate Badges
       const foundBox = document.getElementById("foundKeywords");
-      foundBox.innerHTML = matched.length > 0 
+      foundBox.innerHTML = matched.length > 0
         ? matched.map(k => `<span class="badge-pill badge-found">${k}</span>`).join("")
-        : "<span style='font-size:12px; color:#64748b;'>No target keywords found.</span>";
+        : "<span style='font-size:12px; color:#64748b;'>No target keywords matched.</span>";
 
       const missingBox = document.getElementById("missingKeywords");
-      missingBox.innerHTML = missing.length > 0 
+      missingBox.innerHTML = missing.length > 0
         ? missing.map(k => `<span class="badge-pill badge-missing">${k}</span>`).join("")
-        : "<span style='font-size:12px; color:#10b981;'>No missing keywords! Perfect score.</span>";
+        : "<span style='font-size:12px; color:#10b981;'>All essential keywords matched!</span>";
 
-      // Fill Checklist
-      const listContainer = document.getElementById("checklistItems");
-      listContainer.innerHTML = checklist.map(item => `<li>${item}</li>`).join("");
+      // Populate Checklist
+      const list = document.getElementById("checklistItems");
+      list.innerHTML = checklist.map(c => `<li>${c}</li>`).join("");
 
-      // Smooth scroll to results
-      document.getElementById("resultCard").scrollIntoView({ behavior: 'smooth' });
+      resultCard.scrollIntoView({ behavior: "smooth" });
+    }
+
+    // Built-in Pure JS Confetti (No CDN required)
+    function triggerConfetti() {
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = Array.from({ length: 60 }, () => ({
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        vx: (Math.random() - 0.5) * 12,
+        vy: (Math.random() - 0.8) * 14,
+        size: Math.random() * 7 + 4,
+        color: ['#06b6d4', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e'][Math.floor(Math.random() * 5)]
+      }));
+
+      let frame = 0;
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.35; // gravity
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+
+        frame++;
+        if (frame < 70) {
+          requestAnimationFrame(animate);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      animate();
     }
   </script>
 </body>
